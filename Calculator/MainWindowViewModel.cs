@@ -1,9 +1,7 @@
-﻿using Calculator;
-using CalculatorLib;
+﻿using CalculatorLib;
 using System;
 using System.ComponentModel;
-using System.Net.Http.Headers;
-using System.Threading;
+using System.Timers;
 using System.Windows;
 using System.Windows.Input;
 
@@ -11,7 +9,7 @@ namespace Calculator
 {
     public class MainWindowViewModel : DependencyObject, INotifyPropertyChanged
     {
-        private Thread _displayThread;
+        private Timer _displayTimer;
         private bool _hasCalculated = false;
 
         private string _currentCalculation = "";
@@ -76,12 +74,13 @@ namespace Calculator
             _clearEntryCommand = new SimpleCommand(HandleClearEntryCommand);
             _memoryViewClosed = new SimpleCommand(HandleMemoryViewClosedCommand);
 
-            _displayThread = new Thread(() =>
-            {
-                Thread.Sleep(5000);
-                DisplayPopUp = false;
-            })
-            { IsBackground = true };
+            _displayTimer = new Timer(5000);
+            _displayTimer.Elapsed += DisplayTimerElapsed;
+        }
+
+        private void DisplayTimerElapsed(object? sender, ElapsedEventArgs e)
+        {
+            DisplayPopUp = false;
         }
 
         private void HandleClearEntryCommand(object obj)
@@ -156,7 +155,8 @@ namespace Calculator
 
                 case "MV":
                     DisplayPopUp = true;
-                    _displayThread.Start();
+                    _displayTimer.Stop();
+                    _displayTimer.Start();
 
                     OnPropertyChanged(nameof(MemoryValue));
 
